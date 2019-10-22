@@ -3,6 +3,8 @@
 #include <iostream>
 #include <time.h>
 #include <Windows.h>
+#include <thread>
+#include <chrono>
 
 
 using namespace std;
@@ -11,6 +13,7 @@ using namespace std;
 #define INF std::numeric_limits<float>::infinity()
 #endif
 const GLint WIDTH = 640, HEIGHT = 480;
+GLubyte pixel[HEIGHT][WIDTH][3];
 
 inline float random(float seed) {
 	return ((429493445 * (long long int)((seed + 1) * 1000000) + 907633385) % 4294967296) / 4294967296.;
@@ -241,8 +244,37 @@ float GetCounter()
 	return float(li.QuadPart - CounterStart) / PCFreq;
 }
 
+void multiThread(camera cam, float sinOfF, float pixelRatio, float piyelRatio, float RATIO, int lowx, int lowy, int highx, int highy) {
+	for (int i = lowx; i < highx; i++) {
+		for (int j = lowy; j < highy; j++) {
+			vector3 tempface = vector3(cam.forward.x + cam.right.x*(2 * sinOfF*i*pixelRatio - sinOfF)*RATIO + cam.up.x*(2 * sinOfF*j*piyelRatio - sinOfF), cam.forward.y + cam.right.y*(2 * sinOfF*i*pixelRatio - sinOfF)*RATIO + cam.up.y*(2 * sinOfF*j*piyelRatio - sinOfF), cam.forward.z + cam.right.z*(2 * sinOfF*i*pixelRatio - sinOfF)*RATIO + cam.up.x*(2 * sinOfF*j*piyelRatio - sinOfF));
+			planet *tempp = planets;
+			color tempc, minC = color(), white = color(255, 255, 255), black = color(0, 0, 0);
+			float errorMin = INF, errorTmp;
+
+			while (tempp != NULL) {
+				tempc = cam.rayTrace(tempface, tempp, errorTmp);
+				if (tempc == white && errorTmp == INF && minC == black) {
+					minC = white;
+				}
+				else if (errorTmp < errorMin) {
+					errorMin = errorTmp;
+					minC = tempc;
+				}
+				tempp = tempp->next;
+			}
+			pixel[j][i][0] = minC.r;
+			pixel[j][i][1] = minC.g;
+			pixel[j][i][2] = minC.b;
+		}
+	}
+}
 
 int main() {
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+	cout.tie(0);
+
 	if (!glfwInit()) {
 		return EXIT_FAILURE;
 	}
@@ -263,11 +295,10 @@ int main() {
 
 	planets = new planet(color(250, 100, 200), vector3(0, 500, 0), vector3(0, 0, 0), 100, 50, "P");
 	planet::insert(planets, color(100, 100, 0), vector3(0, 1000, 0), vector3(0, 0, 0), 100, 200, "P");
-	planet::insert(planets, color(255, 255, 255), vector3(0, 0, -200), vector3(0, 0, 0), 100, 50., "P");
+	//planet::insert(planets, color(255, 255, 255), vector3(0, 0, -200), vector3(0, 0, 0), 100, 50., "P");
 	//planets = new planet(color(0, 200, 0), vector3(0, 0, 0), vector3(0, 0, 0), 100, 100, "P");
-	//planet::insert(planets, color(255, 255, 0), vector3(+500, +500, +500), vector3(0, 0, 0), 100, 50., "S");
+	planet::insert(planets, color(255, 255, 0), vector3(0, 0, 0), vector3(0, 0, 0), 100, 50., "S");
 
-	GLubyte pixel[HEIGHT][WIDTH][3];
 	float pixelRatio = 1 / float(WIDTH);
 	float piyelRatio = 1 / float(HEIGHT);
 	float RATIO = float(WIDTH) / float(HEIGHT);
@@ -277,7 +308,16 @@ int main() {
 		glfwPollEvents();
 
 		StartCounter();
-		for (int i = 0; i < WIDTH; i++) {
+		thread Plocica1(multiThread, cam, sinOfF, pixelRatio, piyelRatio, RATIO, 0, 0, WIDTH/2, HEIGHT/2);
+		thread Plocica2(multiThread, cam, sinOfF, pixelRatio, piyelRatio, RATIO, WIDTH / 2, 0, WIDTH, HEIGHT / 2);
+		thread Plocica3(multiThread, cam, sinOfF, pixelRatio, piyelRatio, RATIO, 0, HEIGHT / 2, WIDTH / 2, HEIGHT);
+		thread Plocica4(multiThread, cam, sinOfF, pixelRatio, piyelRatio, RATIO, WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT);
+
+		Plocica1.join();
+		Plocica2.join();
+		Plocica3.join();
+		Plocica4.join();
+		/*for (int i = 0; i < WIDTH; i++) {
 			for (int j = 0; j < HEIGHT; j++) {
 				vector3 tempface = vector3(cam.forward.x + cam.right.x*(2 * sinOfF*i*pixelRatio - sinOfF)*RATIO + cam.up.x*(2 * sinOfF*j*piyelRatio - sinOfF), cam.forward.y + cam.right.y*(2 * sinOfF*i*pixelRatio - sinOfF)*RATIO + cam.up.y*(2 * sinOfF*j*piyelRatio - sinOfF), cam.forward.z + cam.right.z*(2 * sinOfF*i*pixelRatio - sinOfF)*RATIO + cam.up.x*(2 * sinOfF*j*piyelRatio - sinOfF));
 				planet *tempp = planets;
@@ -301,27 +341,27 @@ int main() {
 
 			}
 
-		}
+		}*/
 
 		cout << GetCounter() << endl;
 		// pixel matrix filled
 
+		/*planet *tempp = planets;
+		float copet = 1000;
+		float copet2 = 0.1;
+		while (tempp != NULL) {
+			if (tempp->name != "S") {
+				tempp->pos.x = sin(GetCounter()*copet2) * copet;
+				tempp->pos.y = cos(GetCounter()*copet2) * copet;
+				copet /= 2;
+				copet2 *= 2;
+			}
+			tempp = tempp->next;
+		}
+*/
+
+
 		//planet *tempp = planets;
-		////float copet = 1000;
-		////float copet2 = 0.01;
-		//while (tempp != NULL) {
-		//	if (tempp->name != "S") {
-		//		//tempp->pos.x = sin(GetCounter()*copet2) * copet;
-		//		//tempp->pos.y = cos(GetCounter()*copet2) * copet;
-		//		//copet /= 2;
-		//		//copet2 *= 2;
-		//	}
-		//	tempp = tempp->next;
-		//}
-
-
-
-		planet *tempp = planets;
 		//float copet = 1000;
 		//float copet2 = 0.01;
 		glRasterPos2f(-1, -1);
