@@ -1,2 +1,3 @@
 # ORT
-This is project of modeling 2D solar system...
+
+2D Solar system with 2 opposite planets which fire bullets one to another.
