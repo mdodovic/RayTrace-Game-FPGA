@@ -1,3 +1,3 @@
 # ORT
 
-2D Solar system with 2 opposite planets which fire bullets one to another.
+2D Solar system made in ray trace technique
